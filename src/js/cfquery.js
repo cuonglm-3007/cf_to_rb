@@ -1,5 +1,5 @@
 export default function cfquery(text) {
-  return flow([pre, parse, convert])(text);
+  return flow([pre, parse, convert, remove_comment])(text);
 }
 
 var params;
@@ -210,7 +210,7 @@ function convert_cfquery(node) {
   let has_time_zone_now = params.has("time_zone_now");
   params.delete("time_zone_now");
   let args = Array.from(params);
-  let tmp = `def ${match[1]}(${args.join(", ")})\n`;
+  let tmp = `def ${match[1]} ${args.join(", ")}\n`;
 
   if (node.first().name === "text")
     tmp += `\tsql = "${node.first().content}"\n`;
@@ -228,4 +228,8 @@ function convert_cfquery(node) {
   tmp += "\nend";
 
   return tmp;
+}
+
+function remove_comment(text) {
+  return text.replaceAll(/<!---[\s\S]*?--->/g, "");
 }
