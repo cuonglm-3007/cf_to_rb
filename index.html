@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>v2.0 - Convert code </title>
     <link rel="stylesheet" href="./src/lib/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="./src/css/index.css">
     <link href="./src/lib/google-code-prettify/src/prettify.css" type="text/css" rel="stylesheet" />
@@ -22,15 +22,20 @@
     <div class="App">
         <div class="Converter">
             <div class="select">
-                <select id="mode" class="form-control" onchange="handleChangeSelect(this)">
-                    <option value="erb">Erb</option>
-                    <option value="rb">Rb</option>
-                    <option value="cfquery">cfquery</option>
-                </select>
+                <div>
+                    <select id="mode" class="form-control" onchange="handleChangeSelect(this)">
+                        <option value="rb">Chuyển code cf thông thường sang ruby - rb</option>
+                        <option value="erb">Chuyển giao diện sang erb - erb</option>
+                        <option value="cfquery">Chuyển cfquery sang def ruby - cfquery</option>
+                    </select>
+                </div>
+                <div class="document">
+                    <a href="./README.html">Hướng dẫn</a>
+                </div>
             </div>
             <div class="box">
                 <div class="cfm">
-                    <textarea id="ta_cfm" value="" class="ta_cfm form-control" onchange="handleChangeTaCfm()"
+                    <textarea id="ta_cfm" value="" class="ta_cfm form-control" onchange="handleChangeTaCfm()" onkeyup="handleChangeTaCfm()"
                         placeholder="cfm..."></textarea>
                 </div>
                 <div class="erb">

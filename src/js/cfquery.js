@@ -24,13 +24,13 @@ function pre(text) {
     .replaceAll(/<cfqueryparam.*?value="#([\w.]+?)#".*?>/g, (match, p1) => {
       let name = p1.replaceAll(".", "_");
       params.add(name);
-      return ":" + name;
+      return "?";
     })
     .replaceAll(
-      /<cfqueryparam cfsqltype="CF_SQL_TIMESTAMP" value="#Now\(\)#">/g,
+      /<cfqueryparam cfsqltype="CF_SQL_TIMESTAMP" value="(#Now\(\)#|#now\(\)#|CreateODBCDateTime\(now\(\)\)|CreateODBCDateTime\(Now\(\)\)|createODBCDateTime\(now\(\)\))">/g,
       (match) => {
         params.add("time_zone_now");
-        return ":time_zone_now";
+        return "?";
       }
     )
     .replaceAll(/<cfqueryparam(.*?)>/g, (match, p1) => {
@@ -100,7 +100,7 @@ function convert(node) {
 function convert_text(node) {
   if (node.content.trim() === "") return "";
 
-  return `\tsql += "${node.content.trim()}"\n`;
+  return `\tsql[0] += "${node.content.trim()}"\n`;
 }
 
 function convert_cfif(node) {
@@ -110,7 +110,7 @@ function convert_cfif(node) {
 
   node.children.forEach(function (childNode) {
     if (childNode.name === "text") {
-      tmp += `sql += "${childNode.content.trim()}"\n`;
+      tmp += `sql[0] += "${childNode.content.trim()}"\n`;
     } else {
       tmp += convert(childNode);
     }
@@ -213,18 +213,21 @@ function convert_cfquery(node) {
   let tmp = `def ${match[1]} ${args.join(", ")}\n`;
 
   if (node.first().name === "text")
-    tmp += `\tsql = "${node.first().content}"\n`;
-  else tmp += '\tsql = ""\n';
+    tmp += `\tsql = ["${node.first().content}"]\n`;
+  else tmp += '\tsql = [""]\n';
 
   node.children.forEach((childNode, index) => {
     if (childNode.name === "text" && index === 0) return;
     tmp += "\t" + convert(childNode);
   });
 
-  args = args.map((value) => `${value}: ${value}`);
-  tmp += `\n\tfind_by_sql [sql, {${args.join(", ")}${
-    has_time_zone_now ? ", time_zone_now: Time.zone.now" : ""
-  }}]`;
+  if(args.length > 0 || has_time_zone_now){
+    tmp += `\tsql << ${args.join(" << ")}${
+      has_time_zone_now ? " << Time.zone.now " : ""
+    }`
+  }
+  
+  tmp += `\n\n\tfind_by_sql sql`
   tmp += "\nend";
 
   return tmp;
