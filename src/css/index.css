@@ -41,6 +41,13 @@ code {
 
 .Converter .select {
     padding: 1em;
+    display: flex;
+}
+
+.document{
+    text-align: center;
+    margin: auto;
+    margin-right: 1rem;
 }
 
 .Converter .box {
