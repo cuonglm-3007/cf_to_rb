@@ -59,10 +59,30 @@ function replaceLateCommon(text) {
     },
     {
       isRegex: true,
+      cf: /(dateAdd|DateAdd|dateadd|Dateadd)\((| )('d'|"d")( |),( |)([^,]+),( |)([^\)]+)\)/,
+      rb: "$8 + $6.to_i.days",
+    },
+    {
+      isRegex: true,
+      cf: /(dateAdd|DateAdd|dateadd|Dateadd)\((| )('h'|"h")( |),( |)([^,]+),( |)([^\)]+)\)/,
+      rb: "$8 + $6.to_i.hours",
+    },
+    {
+      isRegex: true,
+      cf: /(dateAdd|DateAdd|dateadd|Dateadd)\((| )('n'|"n")( |),( |)([^,]+),( |)([^\)]+)\)/,
+      rb: "$8 + $6.to_i.minutes",
+    },
+    {
+      isRegex: true,
+      cf: /(dateAdd|DateAdd|dateadd|Dateadd)\((| )('m'|"m")( |),( |)([^,]+),( |)([^\)]+)\)/,
+      rb: "$8 + $6.to_i.months",
+    },
+    // dateformat
+    {
+      isRegex: true,
       cf: /(DateFormat|dateFormat|dateformat|Dateformat|TimeFormat|timeformat|Timeformat|timeFormat)\(([^,\n ]+),([^,\n\)]+)\)/,
       rb: "$2&.strftime($3)",
     },
-    // dateformat
     {
       isRegex: true,
       cf: /(DateFormat|dateFormat|dateformat|Dateformat|TimeFormat|timeformat|Timeformat|timeFormat)\(([^,\n]+),([^,\n\)]+)\)/,
