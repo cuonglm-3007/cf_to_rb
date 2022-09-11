@@ -2,7 +2,7 @@ import cfmToErb from "./cfmToErb.js";
 import cfmToRb from "./cfmToRb.js";
 import cfquery from "./cfquery.js";
 
-var mode = "erb";
+var mode = "rb";
 var cfm = "";
 
 // testText();
