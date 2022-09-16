@@ -2,7 +2,10 @@ export default function cfquery(text) {
   return flow([pre, parse, convert, remove_comment])(text);
 }
 
-var params;
+var params = [];
+var indexParams = 0;
+var uniqueParams = new Set();
+
 const SINGLE_TAGS = [
   "cfset",
   "cfcontinue",
@@ -18,19 +21,16 @@ function flow(cbs) {
 }
 
 function pre(text) {
-  params = new Set();
-
   return text
     .replaceAll(/<cfqueryparam.*?value="#([\w.]+?)#".*?>/g, (match, p1) => {
-      let name = p1.replaceAll(".", "_");
-      params.add(name);
-      return "?";
+      params.push(p1);
+      return "%%?%%";
     })
     .replaceAll(
       /<cfqueryparam cfsqltype="CF_SQL_TIMESTAMP" value="(#Now\(\)#|#now\(\)#|CreateODBCDateTime\(now\(\)\)|CreateODBCDateTime\(Now\(\)\)|createODBCDateTime\(now\(\)\))">/g,
       (match) => {
-        params.add("time_zone_now");
-        return "?";
+        params.push("Time.zone.now");
+        return "%%?%%";
       }
     )
     .replaceAll(/<cfqueryparam(.*?)>/g, (match, p1) => {
@@ -85,7 +85,7 @@ function convert(node) {
     case "text":
       return convert_text(node);
     case "cfelse":
-      return "else";
+      return "else\n";
     case "cfelseif":
       return convert_cfelseif(node);
     case "cfset":
@@ -97,10 +97,41 @@ function convert(node) {
   }
 }
 
-function convert_text(node) {
-  if (node.content.trim() === "") return "";
+function addUniqueParam(variable) {
+  uniqueParams.add(variable.split(".")[0]);
+}
 
-  return `\tsql[0] += "${node.content.trim()}"\n`;
+function convert_text(node, isFirst = false) {
+  if (!isFirst && node.content.trim() === "") return "";
+
+  let content = node.content.trim();
+  let times = 0;
+
+  content = content.replaceAll(/%%\?%%/g, (match, p1) => {
+    times++;
+    return "?";
+  });
+
+  let result = "";
+  if (!isFirst) {
+    result += `\tsql[0] += "${content} "\n`;
+  } else {
+    result += `\t sql = ["${content} "]\n`;
+  }
+
+  if (times > 0) {
+    result += `sql << ${params
+      .slice(indexParams, indexParams + times)
+      .join(" << ")}\n`;
+
+    for (let i = indexParams; i < indexParams + times; i++) {
+      addUniqueParam(params[i]);
+    }
+
+    indexParams += times;
+  }
+
+  return result;
 }
 
 function convert_cfif(node) {
@@ -110,12 +141,15 @@ function convert_cfif(node) {
 
   node.children.forEach(function (childNode) {
     if (childNode.name === "text") {
-      tmp += `sql[0] += "${childNode.content.trim()}"\n`;
+      tmp += convert_text(childNode);
     } else {
       tmp += convert(childNode);
     }
   });
 
+  if (tmp.slice(-1) != "\n") {
+    tmp += "\n";
+  }
   tmp += "end\n";
   return tmp;
 }
@@ -204,30 +238,26 @@ function convert_cfset(node) {
 }
 
 function convert_cfquery(node) {
+  let body = "";
+
+  node.children.forEach((childNode, index) => {
+    if (childNode.name === "text" && index === 0) {
+      body += convert_text(childNode, true);
+      return;
+    }
+    body += "\t" + convert(childNode);
+  });
+
   let match = node.content.match(/name="(\w+)"/);
   if (!match) return node.content;
 
-  let has_time_zone_now = params.has("time_zone_now");
-  params.delete("time_zone_now");
-  let args = Array.from(params);
-  let tmp = `def ${match[1]} ${args.join(", ")}\n`;
+  let tmp = "";
+  let args = Array.from(uniqueParams);
+  tmp += `def ${match[1]} ${args.join(", ")}\n`;
 
-  if (node.first().name === "text")
-    tmp += `\tsql = ["${node.first().content}"]\n`;
-  else tmp += '\tsql = [""]\n';
+  tmp += body;
 
-  node.children.forEach((childNode, index) => {
-    if (childNode.name === "text" && index === 0) return;
-    tmp += "\t" + convert(childNode);
-  });
-
-  if(args.length > 0 || has_time_zone_now){
-    tmp += `\tsql << ${args.join(" << ")}${
-      has_time_zone_now ? " << Time.zone.now " : ""
-    }`
-  }
-  
-  tmp += `\n\n\tfind_by_sql sql`
+  tmp += `\n\n\tfind_by_sql sql`;
   tmp += "\nend";
 
   return tmp;
