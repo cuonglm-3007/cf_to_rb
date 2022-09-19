@@ -218,8 +218,10 @@ window.handleChangeTaCfm = function handleChangeTaCfm() {
   updateErb();
 };
 
-window.handleChangeSelect = function handleChangeSelect(selectObject) {
-  mode = selectObject.value;
+window.handleChangeSelect = function handleChangeSelect(value) {
+  $(".nav-link").removeClass("active");
+  $(`#button-${value}`).addClass("active")
+  mode = value;
   updateErb();
 };
 
