@@ -154,6 +154,122 @@ function replaceLateCommon(text) {
       cf: /<cfcase value="([A-Za-z0-9_]+)">/,
       rb: "when \"$1\"",
     },
+    // len, listlen, arraylen
+    {
+      isRegex: true,
+      cf: /(ListLen|listLen|listlen|Listlen)\((( |)([^,]+)( |))\, (( |)([^\\)]+)( |))\)/,
+      rb: "$2.split($6).length",
+    },
+    {
+      isRegex: true,
+      cf: /(ArrayLen|arrayLen|arraylen|Arraylen|ListLen|listLen|listlen|Listlen)\(( |)([^\(\)]+)( |)\)/,
+      rb: "$3.length",
+    },
+    {
+      isRegex: true,
+      cf: /(len|Len)\(( |)([^\(\)]+)( |)\)/,
+      rb: "$3.length",
+    },
+    // ReFind
+    {
+      isRegex: true,
+      cf: /(ReFind|refind|Refind|reFind|REFind|REfind|rEFind)\(( |)"(.+)"( |),( |)(.+)( |)\) (eq|==) 0/,
+      rb: "!$6.match?(/$3/) ",
+    },
+    {
+      isRegex: true,
+      cf: /(ReFind|refind|Refind|reFind|REFind|REfind|rEFind)\(( |)"(.+)"( |),( |)(.+)( |)\) (eq|==) 0/,
+      rb: "!$6.match?(/$3/) ",
+    },
+    {
+      isRegex: true,
+      cf: /(ReFind|refind|Refind|reFind|REFind|REfind|rEFind)\(( |)'(.+)'( |),( |)(.+)( |)\) (gt|>) 0/,
+      rb: "$6.match?(/$3/) ",
+    },
+    {
+      isRegex: true,
+      cf: /(ReFind|refind|Refind|reFind|REFind|REfind|rEFind)\(( |)'(.+)'( |),( |)(.+)( |)\) (gt|>) 0/,
+      rb: "$6.match?(/$3/) ",
+    },
+    // ListFind
+    {
+      isRegex: true,
+      cf: /(ListFind|listFind|Listfind|listfind)/,
+      rb: "list_find",
+    },
+    // ListFindNOCase
+    {
+      isRegex: true,
+      cf: /(ListFindNoCase|listFindNoCase|listfindnocase|listfindNoCase|listfindnoCase|listfindnoCase)/,
+      rb: "list_find_no_case",
+    },
+    // ListGetAt
+    {
+      isRegex: true,
+      cf: /(listGetAt|listgetat|ListgetAt|listgetAt)/,
+      rb: "list_get_at",
+    },
+    // Find
+    {
+      isRegex: true,
+      cf: / (Find|find)\(( |)'(.+)'( |),( |)(.+)( |)\) (eq|==) 0/,
+      rb: " !$6.match?(\"$3\") ",
+    },
+    {
+      isRegex: true,
+      cf: / (Find|find)\(( |)'(.+)'( |),( |)(.+)( |)\) (gt|>) 0/,
+      rb: " $6.match?(\"$3\") ",
+    },
+    {
+      isRegex: true,
+      cf: / (Find|find)\(( |)"(.+)"( |),( |)(.+)( |)\) (eq|==) 0/,
+      rb: " !$6.match?(\"$3\") ",
+    },
+    {
+      isRegex: true,
+      cf: / (Find|find)\(( |)"(.+)"( |),( |)(.+)( |)\) (gt|>) 0/,
+      rb: " $6.match?(\"$3\") ",
+    },
+    // isNumeric
+    {
+      isRegex: true,
+      cf: /(isNumeric|IsNumeric|isnumeric|ISNumeric)/,
+      rb: "is_numeric?",
+    },
+    // <cfcontinue>
+    {
+      isRegex: false,
+      cf: "<cfcontinue>",
+      rb: "next",
+    },
+    // <cfbreak>
+    {
+      isRegex: false,
+      cf: "<cfbreak>",
+      rb: "break",
+    },
+    // Format date
+    {
+      isRegex: true,
+      cf: /("yyyy\/mm\/dd"|"YYYY\/MM\/DD"|'yyyy\/mm\/dd'|'YYYY\/MM\/DD')/,
+      rb: "Settings.datetime.year_month_date",
+    },
+    {
+      isRegex: true,
+      cf: /("yyyymmdd"|"YYYYMMDD"|'yyyymmdd'|'YYYYMMDD')/,
+      rb: "Settings.datetime.csv_date",
+    },
+    // <cftransaction>
+    {
+      isRegex: false,
+      cf: "<cftransaction>",
+      rb: "ApplicationRecord.transaction do",
+    },
+    {
+      isRegex: false,
+      cf: "</cftransaction>",
+      rb: "end",
+    },
     // {
     //   isRegex: true,
     //   cf: /regex/,
@@ -163,8 +279,8 @@ function replaceLateCommon(text) {
 
   // common
   text = text
-    .replaceAll(/request.([\w]+)\.([\w]+)/g, "request[:$1][:$2]")
-    .replaceAll(/request.([\w]+)/g, "request[:$1]")
+    .replaceAll(/request\.([\w]+)\.([\w]+)/g, "request[:$1][:$2]")
+    .replaceAll(/request\.([\w]+)/g, "request[:$1]")
     .replaceAll(
       /request\[:([\w]+)\]\[:([\w]+)\]( |)(==|eq|is)( |)1/g,
       "request[:$1][:$2].to_i == 1"
