@@ -23,4 +23,10 @@
 - (done) <cfswitch expression="#enbaito_api#"></cfswitch>
 - (done) <cfcase  value="update_list,update"></cfcase>
 - (done) .recordcount => .count
-- XMLFormat(slct_branch_name) => slct_branch_name
+- (done) XMLFormat(slct_branch_name) => slct_branch_name
+- Lỗi cfquery elsesql[0]
+- Lỗi <cfswitch expression="#registrants_csv_struct["c"]["formmaster_type"]#">
+- Lỗi arg_request_site chuyển arg_request[:site]
+- ArrayLen(result) => result.length: 
+- isNumeric => is_numeric?
+- Len(age_tmp)
